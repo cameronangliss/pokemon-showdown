@@ -26,6 +26,8 @@ tools/modlog/converter.js
 tools/modlog/**/*.js
 tools/set-import/*.js
 
+package-lock.json
+
 # visual studio live share
 .vs
 
