@@ -222,8 +222,6 @@ export class RandomGen5Teams extends RandomGen6Teams {
 			['switcheroo', 'suckerpunch'],
 			// Jirachi
 			['bodyslam', 'healingwish'],
-			// Shuckle
-			['knockoff', 'protect'],
 		];
 
 		for (const pair of incompatiblePairs) this.incompatibleMoves(moves, movePool, pair[0], pair[1]);
@@ -811,7 +809,10 @@ export class RandomGen5Teams extends RandomGen6Teams {
 		}
 
 		// Minimize confusion damage, including if Foul Play is its only physical attack
-		if ((!counter.get('Physical') || (counter.get('Physical') <= 1 && moves.has('foulplay'))) && !moves.has('transform')) {
+		if (
+			(!counter.get('Physical') || (counter.get('Physical') <= 1 && (moves.has('foulplay') || moves.has('rapidspin')))) &&
+			!moves.has('transform')
+		) {
 			evs.atk = 0;
 			ivs.atk = hasHiddenPower ? (ivs.atk || 31) - 28 : 0;
 		}
@@ -843,7 +844,7 @@ export class RandomGen5Teams extends RandomGen6Teams {
 	randomTeam() {
 		this.enforceNoDirectCustomBanlistChanges();
 
-		const seed = this.prng.seed;
+		const seed = this.prng.getSeed();
 		const ruleTable = this.dex.formats.getRuleTable(this.format);
 		const pokemon: RandomTeamsTypes.RandomSet[] = [];
 

@@ -14,7 +14,7 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		// For more examples, see https://github.com/smogon/pokemon-showdown/blob/master/data/abilities.ts
 	},
 	*/
-	// Please keep abilites organized alphabetically based on staff member name!
+	// Please keep abilities organized alphabetically based on staff member name!
 	// Aelita
 	fortifiedmetal: {
 		shortDesc: "This Pokemon's weight is doubled and Attack is 1.5x when statused.",
@@ -467,13 +467,13 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		flags: {breakable: 1},
 	},
 
-	// Breadstycks
+	// Breadey
 	painfulexit: {
 		shortDesc: "When this Pokemon switches out, foes lose 25% HP.",
 		name: "Painful Exit",
 		onBeforeSwitchOutPriority: -1,
 		onBeforeSwitchOut(pokemon) {
-			this.add(`c:|${getName('Breadstycks')}|Just kidding!! Take this KNUCKLE SANDWICH`);
+			this.add(`c:|${getName('Breadey')}|Just kidding!! Take this KNUCKLE SANDWICH`);
 			for (const foe of pokemon.foes()) {
 				if (!foe || foe.fainted || !foe.hp) continue;
 				this.add(`-anim`, pokemon, "Tackle", foe);
@@ -503,6 +503,23 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 			if (move.typeChangerBoosted === this.effect) return this.chainModify([4915, 4096]);
 		},
 		flags: {},
+	},
+
+	// Chris
+	astrothunder: {
+		shortDesc: "Drizzle + Static.",
+		name: "Astrothunder",
+		onStart(source) {
+			if (source.species.id === 'kyogre' && source.item === 'blueorb') return;
+			this.field.setWeather('raindance');
+		},
+		onDamagingHit(damage, target, source, move) {
+			if (this.checkMoveMakesContact(move, source, target)) {
+				if (this.randomChance(3, 10)) {
+					source.trySetStatus('par', target);
+				}
+			}
+		},
 	},
 
 	// Clefable
@@ -673,26 +690,6 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		flags: {},
 	},
 
-	// Daki
-	astrothunder: {
-		shortDesc: "Drizzle + Static.",
-		name: "Astrothunder",
-		onStart(source) {
-			for (const action of this.queue) {
-				if (action.choice === 'runPrimal' && action.pokemon === source && source.species.id === 'kyogre') return;
-				if (action.choice !== 'runSwitch' && action.choice !== 'runPrimal') break;
-			}
-			this.field.setWeather('raindance');
-		},
-		onDamagingHit(damage, target, source, move) {
-			if (this.checkMoveMakesContact(move, source, target)) {
-				if (this.randomChance(3, 10)) {
-					source.trySetStatus('par', target);
-				}
-			}
-		},
-	},
-
 	// Dawn of Artemis
 	formchange: {
 		shortDesc: ">50% HP Necrozma, else Necrozma-Ultra. SpA boosts become Atk boosts and vice versa.",
@@ -797,7 +794,7 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		onDamage(damage, target, source, effect) {
 			if (effect.id === 'recoil') {
 				let trueSource = source;
-				// For some reason, the source of the damage is the subsitute user when
+				// For some reason, the source of the damage is the substitute user when
 				// hitting a sub.
 				if (source !== target) trueSource = target;
 				if (!this.activeMove) throw new Error("Battle.activeMove is null");
@@ -1088,58 +1085,6 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 			}
 		},
 		flags: {breakable: 1},
-	},
-
-	// Irly
-	therollingspheal: {
-		shortDesc: "1.5x dmg boost for every repeated move use. Up to 5 uses. +1 Spe when use contact.",
-		name: "The Rolling Spheal",
-		onStart(pokemon) {
-			pokemon.addVolatile('therollingspheal');
-		},
-		onSourceHit(target, source, move) {
-			if (move.flags['contact'] && move.category === 'Physical') {
-				this.add('-activate', source, 'ability: The Rolling Spheal');
-				this.boost({spe: 1}, source, source, move);
-			}
-		},
-		condition: {
-			onStart(pokemon) {
-				this.effectState.lastMove = '';
-				this.effectState.numConsecutive = 0;
-			},
-			onTryMovePriority: -2,
-			onTryMove(pokemon, target, move) {
-				if (!pokemon.hasAbility('therollingspheal')) {
-					pokemon.removeVolatile('therollingspheal');
-					return;
-				}
-				if (this.effectState.lastMove === move.id && pokemon.moveLastTurnResult) {
-					this.effectState.numConsecutive++;
-				} else if (pokemon.volatiles['twoturnmove']) {
-					if (this.effectState.lastMove !== move.id) {
-						this.effectState.numConsecutive = 1;
-					} else {
-						this.effectState.numConsecutive++;
-					}
-				} else {
-					this.effectState.numConsecutive = 0;
-				}
-				this.effectState.lastMove = move.id;
-			},
-			onModifyDamage(damage, source, target, move) {
-				if (this.effectState.numConsecutive > 0) {
-					this.debug(`Current Metronome boost: 6144/4096`);
-					return this.chainModify([6144, 4096]);
-				}
-			},
-			onAfterMove(source, target, move) {
-				if (this.effectState.numConsecutive > 5) {
-					this.effectState.numConsecutive = 0;
-				}
-			},
-		},
-		flags: {},
 	},
 
 	// Irpachuza
@@ -1472,17 +1417,22 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		flags: {breakable: 1},
 	},
 
-	// maroon
-	builtdifferent: {
-		shortDesc: "Stamina + Normal-type moves get +1 priority.",
-		name: "Built Different",
-		onDamagingHit(damage, target, source, effect) {
-			this.boost({def: 1});
+	// Maia
+	powerabuse: {
+		shortDesc: "Drought + 60% damage reduction + 20% burn after physical move.",
+		name: "Power Abuse",
+		onStart() {
+			this.field.setWeather('sunnyday');
 		},
-		onModifyPriority(priority, pokemon, target, move) {
-			if (move?.type === 'Normal') return priority + 1;
+		onSourceModifyDamage() {
+			return this.chainModify(0.4);
 		},
-		flags: {},
+		onDamagingHit(damage, target, source, move) {
+			if (move.category === "Physical" && this.randomChance(1, 5)) {
+				source.trySetStatus('brn', target);
+			}
+		},
+		flags: {breakable: 1},
 	},
 
 	// Mathy
@@ -1589,6 +1539,58 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		flags: {},
 	},
 
+	// Miojo
+	therollingspheal: {
+		shortDesc: "1.5x dmg boost for every repeated move use. Up to 5 uses. +1 Spe when use contact.",
+		name: "The Rolling Spheal",
+		onStart(pokemon) {
+			pokemon.addVolatile('therollingspheal');
+		},
+		onSourceHit(target, source, move) {
+			if (move.flags['contact'] && move.category === 'Physical') {
+				this.add('-activate', source, 'ability: The Rolling Spheal');
+				this.boost({spe: 1}, source, source, move);
+			}
+		},
+		condition: {
+			onStart(pokemon) {
+				this.effectState.lastMove = '';
+				this.effectState.numConsecutive = 0;
+			},
+			onTryMovePriority: -2,
+			onTryMove(pokemon, target, move) {
+				if (!pokemon.hasAbility('therollingspheal')) {
+					pokemon.removeVolatile('therollingspheal');
+					return;
+				}
+				if (this.effectState.lastMove === move.id && pokemon.moveLastTurnResult) {
+					this.effectState.numConsecutive++;
+				} else if (pokemon.volatiles['twoturnmove']) {
+					if (this.effectState.lastMove !== move.id) {
+						this.effectState.numConsecutive = 1;
+					} else {
+						this.effectState.numConsecutive++;
+					}
+				} else {
+					this.effectState.numConsecutive = 0;
+				}
+				this.effectState.lastMove = move.id;
+			},
+			onModifyDamage(damage, source, target, move) {
+				if (this.effectState.numConsecutive > 0) {
+					this.debug(`Current Metronome boost: 6144/4096`);
+					return this.chainModify([6144, 4096]);
+				}
+			},
+			onAfterMove(source, target, move) {
+				if (this.effectState.numConsecutive > 5) {
+					this.effectState.numConsecutive = 0;
+				}
+			},
+		},
+		flags: {},
+	},
+
 	// Monkey
 	harambehit: {
 		shortDesc: "Unseen Fist + Punch moves have 1.5x power.",
@@ -1682,29 +1684,6 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		// Item chances modified in items.js
 	},
 
-	// Nyx
-	lasthymn: {
-		shortDesc: "Weakens incoming attacks by 10% for each Pokemon fainted.",
-		name: "Last Hymn",
-		onStart(pokemon) {
-			if (pokemon.side.totalFainted) {
-				this.add('-activate', pokemon, 'ability: Last Hymn');
-				const fallen = Math.min(pokemon.side.totalFainted, 5);
-				this.add('-start', pokemon, `fallen${fallen}`, '[silent]');
-				this.effectState.fallen = fallen;
-			}
-		},
-		onEnd(pokemon) {
-			this.add('-end', pokemon, `fallen${this.effectState.fallen}`, '[silent]');
-		},
-		onBasePowerPriority: 21,
-		onFoeBasePower(basePower, attacker, defender, move) {
-			if (this.effectState.fallen) {
-				return this.chainModify([10, (10 + this.effectState.fallen)]);
-			}
-		},
-	},
-
 	// pants
 	drifting: {
 		shortDesc: "Wandering Spirit + Stakeout.",
@@ -1727,14 +1706,14 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		},
 		onModifyAtkPriority: 5,
 		onModifyAtk(atk, attacker, defender) {
-			if (!defender.activeTurns) {
+			if (defender && !defender.activeTurns) {
 				this.debug('Stakeout boost');
 				return this.chainModify(2);
 			}
 		},
 		onModifySpAPriority: 5,
 		onModifySpA(atk, attacker, defender) {
-			if (!defender.activeTurns) {
+			if (defender && !defender.activeTurns) {
 				this.debug('Stakeout boost');
 				return this.chainModify(2);
 			}
@@ -1760,8 +1739,7 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 					target.clearBoosts();
 					this.add('-clearboost', target);
 					this.boost({atk: 1, def: -1, spa: 1, spd: -1, spe: 1});
-					const details = target.species.name + (target.level === 100 ? '' : ', L' + target.level) +
-						(target.gender === '' ? '' : ', ' + target.gender) + (target.set.shiny ? ', shiny' : '');
+					const details = target.getUpdatedDetails();
 					target.details = details;
 					this.add('replace', target, details);
 				}
@@ -1802,6 +1780,29 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		name: "I Did It Again",
 		flags: {},
 		// implemented in rulesets.ts
+	},
+
+	// Princess Autumn
+	lasthymn: {
+		shortDesc: "Weakens incoming attacks by 10% for each Pokemon fainted.",
+		name: "Last Hymn",
+		onStart(pokemon) {
+			if (pokemon.side.totalFainted) {
+				this.add('-activate', pokemon, 'ability: Last Hymn');
+				const fallen = Math.min(pokemon.side.totalFainted, 5);
+				this.add('-start', pokemon, `fallen${fallen}`, '[silent]');
+				this.effectState.fallen = fallen;
+			}
+		},
+		onEnd(pokemon) {
+			this.add('-end', pokemon, `fallen${this.effectState.fallen}`, '[silent]');
+		},
+		onBasePowerPriority: 21,
+		onFoeBasePower(basePower, attacker, defender, move) {
+			if (this.effectState.fallen) {
+				return this.chainModify([10, (10 + this.effectState.fallen)]);
+			}
+		},
 	},
 
 	// Pulse_kS
@@ -1917,10 +1918,7 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		name: "Rainy's Aura",
 		onStart(source) {
 			if (this.suppressingAbility(source)) return;
-			for (const action of this.queue) {
-				if (action.choice === 'runPrimal' && action.pokemon === source && source.species.id === 'kyogre') return;
-				if (action.choice !== 'runSwitch' && action.choice !== 'runPrimal') break;
-			}
+			if (source.species.id === 'kyogre' && source.item === 'blueorb') return;
 			this.field.setWeather('raindance');
 		},
 		onAnyBasePowerPriority: 20,
@@ -2043,6 +2041,19 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 			}
 		},
 		flags: {failroleplay: 1, noreceiver: 1, noentrain: 1, notrace: 1},
+	},
+
+	// Rio Vidal
+	builtdifferent: {
+		shortDesc: "Stamina + Normal-type moves get +1 priority.",
+		name: "Built Different",
+		onDamagingHit(damage, target, source, effect) {
+			this.boost({def: 1});
+		},
+		onModifyPriority(priority, pokemon, target, move) {
+			if (move?.type === 'Normal') return priority + 1;
+		},
+		flags: {},
 	},
 
 	// Rissoux
@@ -2264,10 +2275,7 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 		desc: "On switch-in, this Pokemon summons Sunny Day. If Sunny Day is active, this Pokemon's Speed is 1.5x.",
 		name: "Ride the Sun!",
 		onStart(source) {
-			for (const action of this.queue) {
-				if (action.choice === 'runPrimal' && action.pokemon === source && source.species.id === 'groudon') return;
-				if (action.choice !== 'runSwitch' && action.choice !== 'runPrimal') break;
-			}
+			if (source.species.id === 'groudon' && source.item === 'redorb') return;
 			this.field.setWeather('sunnyday');
 		},
 		onModifySpe(spe, pokemon) {
@@ -2404,24 +2412,6 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 			}
 		},
 		flags: {},
-	},
-
-	// Theia
-	powerabuse: {
-		shortDesc: "Drought + 60% damage reduction + 20% burn after physical move.",
-		name: "Power Abuse",
-		onStart() {
-			this.field.setWeather('sunnyday');
-		},
-		onSourceModifyDamage() {
-			return this.chainModify(0.4);
-		},
-		onDamagingHit(damage, target, source, move) {
-			if (move.category === "Physical" && this.randomChance(1, 5)) {
-				source.trySetStatus('brn', target);
-			}
-		},
-		flags: {breakable: 1},
 	},
 
 	// Tico
@@ -2763,7 +2753,7 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 	// yeet dab xd
 	treasurebag: {
 		shortDesc: "At the end of the turn and when top kek is used, use one Treasure Bag item in the cycle.",
-		desc: "At the end of each turn and when top kek is used, one of the following effects will occur, starting at the top and moving to the next item for each use of Treasure Bag: Deal 100 HP of damage to the foe, heal the user for 100 HP, paralyze the foe, set Aurora Veil for 5 turns, or grant the user a permanent Reviver Seed condition that causes it to revive to 50% upon reaching 0 HP once. If the Reviver Seed effect is set, all future cycles will replace that effect with a no-effect Reviser Seed item. The state of the cycle persists if the Pokemon switches out and back in.",
+		desc: "At the end of each turn and when top kek is used, one of the following effects will occur, starting at the top and moving to the next item for each use of Treasure Bag: Deal 50 HP of damage to the foe, heal the user for 100 HP, paralyze the foe, set Aurora Veil for 5 turns, or grant the user a permanent Reviver Seed condition that causes it to revive to 50% upon reaching 0 HP once. If the Reviver Seed effect is set, all future cycles will replace that effect with a no-effect Reviser Seed item. The state of the cycle persists if the Pokemon switches out and back in.",
 		name: "Treasure Bag",
 		onStart(target) {
 			this.add('-ability', target, 'Treasure Bag');
@@ -2790,7 +2780,7 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 						this.add('-activate', pokemon, 'ability: Treasure Bag');
 						this.add('-message', `${pokemon.name} dug through its Treasure Bag and found a ${currentItem}!`);
 						if (foe) {
-							this.damage(100, foe, pokemon, this.effect);
+							this.damage(50, foe, pokemon, this.effect);
 						} else {
 							this.add('-message', `But there was no target!`);
 						}
@@ -3062,7 +3052,7 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 				break;
 			}
 			if (pokemon.isActive && forme) {
-				pokemon.formeChange(forme, this.effect, false, '[msg]');
+				pokemon.formeChange(forme, this.effect, false, '0', '[msg]');
 			}
 		},
 	},
@@ -3078,7 +3068,7 @@ export const Abilities: import('../../../sim/dex-abilities').ModdedAbilityDataTa
 	},
 	neutralizinggas: {
 		inherit: true,
-		onPreStart(pokemon) {
+		onSwitchIn(pokemon) {
 			this.add('-ability', pokemon, 'Neutralizing Gas');
 			pokemon.abilityState.ending = false;
 			for (const target of this.getAllActive()) {

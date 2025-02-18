@@ -978,9 +978,9 @@ export class ScavengerHunt extends Rooms.RoomGame<ScavengerHuntPlayer> {
 		return hosts;
 	}
 
-	static parseQuestions(questionArray: string[]): AnyObject {
-		if (questionArray.length % 2 === 1) return {err: "Your final question is missing an answer"};
-		if (questionArray.length < 6) return {err: "You must have at least 3 hints and answers"};
+	static parseQuestions(questionArray: string[], force = false): AnyObject {
+		if (questionArray.length % 2 === 1 && !force) return {err: "Your final question is missing an answer"};
+		if (questionArray.length < 6 && !force) return {err: "You must have at least 3 hints and answers"};
 
 		const formattedQuestions = [];
 
@@ -988,13 +988,16 @@ export class ScavengerHunt extends Rooms.RoomGame<ScavengerHuntPlayer> {
 			if (i % 2) {
 				const answers = question.split(';').map(p => p.trim());
 				formattedQuestions[i] = answers;
-				if (!answers.length || answers.some(a => !toID(a))) {
+				if (!force && (!answers.length || answers.some(a => !toID(a)))) {
 					return {err: "Empty answer - only alphanumeric characters will count in answers."};
 				}
 			} else {
+				// Skip last question if there is no answer
+				if (i + 1 === questionArray.length) continue;
+
 				question = question.trim();
 				formattedQuestions[i] = question;
-				if (!question) return {err: "Empty question."};
+				if (!question && !force) return {err: "Empty question."};
 			}
 		}
 
@@ -1750,6 +1753,14 @@ const ScavengerCommands: Chat.ChatCommands = {
 	queuehtmlrated: 'queue',
 	queuehtmlrecycled: 'queue',
 	queuehtml: 'queue',
+	forcequeueunrated: 'queue',
+	forcequeuerated: 'queue',
+	forcequeuerecycled: 'queue',
+	forcequeuehtmlunrated: 'queue',
+	forcequeuehtmlrated: 'queue',
+	forcequeuehtmlrecycled: 'queue',
+	forcequeuehtml: 'queue',
+	forcequeue: 'queue',
 	queue(target, room, user) {
 		room = this.requireRoom();
 		if (!getScavsRoom(room)) {
@@ -1801,7 +1812,7 @@ const ScavengerCommands: Chat.ChatCommands = {
 				return this.errorReply("The user(s) you specified as the host is not online, or is not in the room.");
 			}
 
-			const results = ScavengerHunt.parseQuestions(params);
+			const results = ScavengerHunt.parseQuestions(params, this.cmd.includes('force'));
 			if (results.err) return this.errorReply(results.err);
 
 			if (!room.settings.scavQueue) room.settings.scavQueue = [];
@@ -2675,6 +2686,7 @@ export const commands: Chat.ChatCommands = {
 			"- /scav twists: Show a list of all the twists that are available on the server.",
 			"- /scav settwist: View the current default official hunt twist that is in use.",
 			"- /scav setpoints: Show the current point distribution for officials, minis and regular hunts.",
+			"- /scav sethostpoints: Show the current points awarded for hosting hunts.",
 			"- /scav setblitz: Show the current points awarded for Blitzing an official, mini or regular hunt.",
 			"- /scav defaulttimer: Show the default timer applied to hunts started automatically from the queue.",
 			"- /scav addpoints <em>[user]</em>, <em>[amount]</em>: Give the user the specified amount of points towards the current ladder.",
@@ -2685,6 +2697,7 @@ export const commands: Chat.ChatCommands = {
 			"<br />As a <strong>room owner (#)</strong>, you can also use the following scavengers commands:",
 			"- /scav resetladder: Reset the current scavenger leaderboard.",
 			"- /scav setpoints <em>[1st place]</em>, <em>[2nd place]</em>, <em>[3rd place]</em>, <em>[4th place]</em>, <em>[5th place]</em>, ...: Set the point values for wins of officials, minis and regular hunts.",
+			"- /scav sethostpoints <em>[value]</em>: Set the point value for hosting regular hunts.",
 			"- /scav defaulttimer <em>[value]</em>: Set the default timer applied to automatically started hunts from the queue.",
 			"- /scav setblitz <em>[value]</em> ...: Set the blitz award to the given value.",
 			"- /scav settwist <em>[twist name]</em>: Set the default twist mode for all official hunts.",

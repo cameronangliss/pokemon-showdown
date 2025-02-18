@@ -35,6 +35,26 @@ describe('Tera Shell', function () {
 		assert.fullHP(terapagos);
 	});
 
+	// confirmed here: https://www.smogon.com/forums/threads/scarlet-violet-battle-mechanics-research.3709545/post-10398768
+	it(`should not activate if Terapagos already resists the move`, function () {
+		battle = common.createBattle([[
+			{species: 'Terapagos', ability: 'terashift', moves: ['sleeptalk']},
+		], [
+			{species: 'Urshifu-Rapid-Strike', moves: ['surgingstrikes', 'soak', 'forestscurse']},
+		]]);
+		const terapagos = battle.p1.active[0];
+		battle.makeChoices('auto', 'move soak');
+		battle.makeChoices();
+		assert.bounded(terapagos.maxhp - terapagos.hp, [72, 87]);
+
+		terapagos.hp = terapagos.maxhp;
+		battle.makeChoices('auto', 'move forestscurse');
+		battle.makeChoices();
+		assert.bounded(terapagos.maxhp - terapagos.hp, [36, 42]);
+
+		assert(!battle.getDebugLog().includes('Tera Shell'), `Tera Shell should not have activated`);
+	});
+
 	// kinda confirmed here: https://youtu.be/-nerhfXrmCM?si=hLzfrfzVDdfNFMbv&t=314
 	// confirmed here: https://www.smogon.com/forums/threads/scarlet-violet-battle-mechanics-research.3709545/post-9893781
 	it('All hits of multi-hit move should be not very effective', function () {
@@ -102,7 +122,7 @@ describe('Tera Shell', function () {
 		assert.bounded(damage, [27, 32], `Tera Shell should not have reduced the damage Struggle dealt`);
 	});
 
-	it.skip(`should not continue to weaken attacks after taking damage from a Future attack`, function () {
+	it(`should not continue to weaken attacks after taking damage from a Future attack`, function () {
 		battle = common.createBattle([[
 			{species: 'Terapagos', ability: 'terashift', moves: ['sleeptalk']},
 			{species: 'Espeon', moves: ['sleeptalk']},

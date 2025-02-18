@@ -1,5 +1,6 @@
 import {assignMissingFields, BasicEffect, toID} from './dex-data';
-import {Utils} from '../lib';
+import {Utils} from '../lib/utils';
+import {isDeepStrictEqual} from 'node:util';
 
 interface SpeciesAbility {
 	0: string;
@@ -420,7 +421,7 @@ export class DexSpecies {
 
 		if (this.dex.data.Aliases.hasOwnProperty(id)) {
 			if (this.dex.data.FormatsData.hasOwnProperty(id)) {
-				// special event ID, like Rockruff-Dusk
+				// special event ID
 				const baseId = toID(this.dex.data.Aliases[id]);
 				species = new Species({
 					...this.dex.data.Pokedex[baseId],
@@ -564,6 +565,19 @@ export class DexSpecies {
 				delete species.abilities['H'];
 			}
 			if (this.dex.gen === 3 && this.dex.abilities.get(species.abilities['1']).gen === 4) delete species.abilities['1'];
+
+			if (this.dex.parentMod) {
+				// if this species is exactly identical to parentMod's species, reuse parentMod's copy
+				const parentMod = this.dex.mod(this.dex.parentMod);
+				if (this.dex.data.Pokedex[id] === parentMod.data.Pokedex[id]) {
+					const parentSpecies = parentMod.species.getByID(id);
+					// checking tier cheaply filters out some non-matches.
+					// The construction logic is very complex so we ultimately need to do a deep equality check
+					if (species.tier === parentSpecies.tier && isDeepStrictEqual(species, parentSpecies)) {
+						species = parentSpecies;
+					}
+				}
+			}
 		} else {
 			species = new Species({
 				id, name: id,
@@ -693,8 +707,6 @@ export class DexSpecies {
 		// Greninja-Ash
 		if (['Gastrodon', 'Pumpkaboo', 'Sinistea', 'Tatsugiri'].includes(species.baseSpecies) && species.forme) {
 			return this.get(species.baseSpecies);
-		} else if (species.name === 'Lycanroc-Dusk') {
-			return this.get('Rockruff-Dusk');
 		} else if (species.prevo) {
 			// there used to be a check for Hidden Ability here, but apparently it's unnecessary
 			// Shed Skin Pupitar can definitely evolve into Unnerve Tyranitar

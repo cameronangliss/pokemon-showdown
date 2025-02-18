@@ -180,7 +180,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		},
 		slotCondition: 'freeswitchbutton',
 		condition: {
-			onSwap(target) {
+			onSwitchIn(target) {
 				if (!target.fainted && (target.hp < target.maxhp)) {
 					target.heal(target.maxhp / 3);
 					this.add('-heal', target, target.getHealth, '[from] move: Free Switch Button');
@@ -969,7 +969,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		basePower: 0,
 		category: "Status",
 		shortDesc: "Protect, hit=-2 Atk/SpA/or Spe, user swap.",
-		desc: "Nearly always moves first. This move can only be used by Mega Sableye. The user is protected from most attacks made by other Pokemon during this turn. If a targeted move is blocked during this effect, the attacker's stats are lowered depending on the move used. If the attacker used a physical attack, their Attack is lowered by 2 stages. If the attacker used a special attack, their Special Attack is lowere dby 2 stages. If the attacker used a status move, their Speed is lowered by 2 stages. If this move successfully decreases a Pokemon's stat stages, this Pokemon's Mega Evolution is removed, and it immediately switches out and is replaced by a selected party member. This move fails if the user moves last, and has an increasing chance to fail when used consecutively.",
+		desc: "Nearly always moves first. This move can only be used by Mega Sableye. The user is protected from most attacks made by other Pokemon during this turn. If a targeted move is blocked during this effect, the attacker's stats are lowered depending on the move used. If the attacker used a physical attack, their Attack is lowered by 2 stages. If the attacker used a special attack, their Special Attack is lowered by 2 stages. If the attacker used a status move, their Speed is lowered by 2 stages. If this move successfully decreases a Pokemon's stat stages, this Pokemon's Mega Evolution is removed, and it immediately switches out and is replaced by a selected party member. This move fails if the user moves last, and has an increasing chance to fail when used consecutively.",
 		name: "Shatter and Scatter",
 		pp: 10,
 		priority: 4,
@@ -1174,7 +1174,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		type: "Water",
 	},
 
-	// Breadstycks
+	// Breadey
 	bakersdouzeoff: {
 		accuracy: true,
 		basePower: 0,
@@ -1248,7 +1248,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 				target.clearBoosts();
 				this.add('-clearboost', target);
 				target.addVolatile('protect');
-				const set = Math.floor(Math.random() * 4);
+				const set = this.random(4);
 				const newMoves = [];
 				let role = '';
 				switch (set) {
@@ -1366,6 +1366,42 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		type: "Grass",
 	},
 
+	// Chris
+	antidote: {
+		accuracy: true,
+		basePower: 0,
+		category: "Status",
+		name: "Antidote",
+		shortDesc: "Heal 50% HP + 3 turn Magnet Rise.",
+		desc: "The user restores 1/2 of its maximum HP, rounded half up. If the user is not currently under the effect of Magnet Rise, it gains the effect of Magnet Rise for 3 turns, causing it to be immune to all Ground-type moves except Thousand Arrows for the duration.",
+		pp: 10,
+		priority: 0,
+		flags: {snatch: 1, heal: 1, gravity: 1, metronome: 1},
+		onTryMove() {
+			this.attrLastMove('[still]');
+		},
+		onPrepareHit(pokemon) {
+			this.add('-anim', pokemon, 'Recover', pokemon);
+			this.add('-anim', pokemon, 'Magnet Rise', pokemon);
+		},
+		onTry(source, target, move) {
+			if (target.volatiles['smackdown'] || target.volatiles['ingrain']) return false;
+
+			// Additional Gravity check for Z-move variant
+			if (this.field.getPseudoWeather('Gravity')) {
+				this.add('cant', source, 'move: Gravity', move);
+				return null;
+			}
+		},
+		onHit(target, source, move) {
+			const success = !!this.heal(this.modify(source.maxhp, 0.25));
+			return source.addVolatile('magnetrise', source, move) || success;
+		},
+		secondary: null,
+		target: "self",
+		type: "Normal",
+	},
+
 	// ciran
 	summonmonsterviiifiendishmonstrouspiplupedecolossal: {
 		accuracy: 90,
@@ -1459,7 +1495,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		basePower: 100,
 		category: "Special",
 		shortDesc: "Phys if Atk > SpA. Flips user.",
-		desc: "This move becomes a physical attack if the user's Attack is greater than its Special Attack, including stat stage changes. If this move is successful and the user is an Avalugg, it either gains or loses the Flipped condition, changing its moveset and base stats. When under the Flipped condition, Avalugg's Base Stats are 95/46/44/184/116/95 and its moveset changes to Earth Power, Volt Switch, and Heal Pulse. This move is super effective against Kennedy.",
+		desc: "This move becomes a physical attack if the user's Attack is greater than its Special Attack, including stat stage changes. This move's type depends on the user's primary type. If this move is successful and the user is an Avalugg, it either gains or loses the Flipped condition, changing its moveset and base stats. When under the Flipped condition, Avalugg's Base Stats are 95/46/44/184/116/95 and its moveset changes to Earth Power, Volt Switch, and Heal Pulse. This move is super effective against Kennedy.",
 		name: "(╯°o°）╯︵ ┻━┻",
 		pp: 10,
 		priority: 0,
@@ -1616,42 +1652,6 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		},
 		target: "normal",
 		type: "Grass",
-	},
-
-	// Daki
-	antidote: {
-		accuracy: true,
-		basePower: 0,
-		category: "Status",
-		name: "Antidote",
-		shortDesc: "Heal 50% HP + 3 turn Magnet Rise.",
-		desc: "The user restores 1/2 of its maximum HP, rounded half up. If the user is not currently under the effect of Magnet Rise, it gains the effect of Magnet Rise for 3 turns, causing it to be immune to all Ground-type moves except Thousand Arrows for the duration.",
-		pp: 10,
-		priority: 0,
-		flags: {snatch: 1, heal: 1, gravity: 1, metronome: 1},
-		onTryMove() {
-			this.attrLastMove('[still]');
-		},
-		onPrepareHit(pokemon) {
-			this.add('-anim', pokemon, 'Recover', pokemon);
-			this.add('-anim', pokemon, 'Magnet Rise', pokemon);
-		},
-		onTry(source, target, move) {
-			if (target.volatiles['smackdown'] || target.volatiles['ingrain']) return false;
-
-			// Additional Gravity check for Z-move variant
-			if (this.field.getPseudoWeather('Gravity')) {
-				this.add('cant', source, 'move: Gravity', move);
-				return null;
-			}
-		},
-		onHit(target, source, move) {
-			const success = !!this.heal(this.modify(source.maxhp, 0.25));
-			return source.addVolatile('magnetrise', source, move) || success;
-		},
-		secondary: null,
-		target: "self",
-		type: "Normal",
 	},
 
 	// Dawn of Artemis
@@ -2047,35 +2047,6 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		secondary: null,
 		target: 'normal',
 		type: "Fighting",
-	},
-
-	// eva
-	asoulforasoul: {
-		accuracy: 100,
-		basePower: 0,
-		category: "Physical",
-		shortDesc: "KOes foe + user if ally was KOed prev. turn.",
-		desc: "If one of the user's party members fainted last turn, this move results in a guaranteed KO for both the target and the user. This move can hit Normal-type Pokemon. Fails if one of the user's party members did not faint last turn.",
-		name: "A Soul for a Soul",
-		pp: 5,
-		priority: 1,
-		flags: {protect: 1, contact: 1},
-		onTryMove() {
-			this.attrLastMove('[still]');
-		},
-		onPrepareHit(target, source) {
-			this.add('-anim', source, 'Explosion', target);
-			this.add('-anim', source, 'Final Gambit', target);
-		},
-		onTry(source, target) {
-			if (!source.side.faintedLastTurn) return false;
-			source.faint(source);
-			target?.faint(source);
-		},
-		ignoreImmunity: true,
-		secondary: null,
-		target: "normal",
-		type: "Ghost",
 	},
 
 	// Fame
@@ -2542,7 +2513,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 				target.removeVolatile('wonderwing');
 			},
 			onDamage(damage, target, source, effect) {
-				if (this.effectState.duration < 2) return;
+				if (this.effectState.duration! < 2) return;
 				this.add('-activate', source, 'move: Wonder Wing');
 				return false;
 			},
@@ -2637,7 +2608,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 			const spd = target.getStat('spd', false, true);
 			const physical = Math.floor(Math.floor(Math.floor(Math.floor(2 * pokemon.level / 5 + 2) * 90 * atk) / def) / 50);
 			const special = Math.floor(Math.floor(Math.floor(Math.floor(2 * pokemon.level / 5 + 2) * 90 * spa) / spd) / 50);
-			if (physical > special || (physical === special && this.random(2) === 0)) {
+			if (physical > special || (physical === special && this.randomChance(1, 2))) {
 				move.category = 'Physical';
 				move.flags.contact = 1;
 			}
@@ -2676,32 +2647,6 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		multihit: 3,
 		target: "normal",
 		type: "Ground",
-	},
-
-	// Irly
-	vruuuuuum: {
-		accuracy: 100,
-		basePower: 90,
-		category: "Physical",
-		shortDesc: "Super effective on Water.",
-		desc: "This move's type effectiveness against Water is changed to be super effective no matter what this move's type is.",
-		name: "vruuuuuum",
-		pp: 20,
-		priority: 0,
-		flags: {contact: 1, protect: 1, mirror: 1},
-		onTryMove() {
-			this.attrLastMove('[still]');
-		},
-		onPrepareHit(target, source) {
-			this.add('-anim', source, 'Shift Gear', source);
-			this.add('-anim', source, 'Ice Spinner', target);
-		},
-		onEffectiveness(typeMod, target, type) {
-			if (type === 'Water') return 1;
-		},
-		secondary: null,
-		target: "normal",
-		type: "Ice",
 	},
 
 	// ironwater
@@ -3074,7 +3019,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		category: "Status",
 		name: "Anfield Atmosphere",
 		shortDesc: "No weather/sleep,share statuses,halve hazard dmg.",
-		desc: "For 6 turns, sets a field effect. Negates all weather conditions. Prevents Pokemon from falling asleep. Any status conditions and volatile status conditions applied to one Pokemon will also apply to the all Pokemon on the field. Halves entry hazard damage.",
+		desc: "For 6 turns, sets a field effect. Negates all weather conditions. Prevents Pokemon from falling asleep. Any status conditions and volatile status conditions applied to one Pokemon will also apply to all Pokemon on the field. Halves entry hazard damage.",
 		pp: 5,
 		priority: 0,
 		flags: {mirror: 1},
@@ -3620,6 +3565,28 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		type: "Dragon",
 	},
 
+	// Maia
+	bodycount: {
+		accuracy: 100,
+		basePower: 50,
+		basePowerCallback(pokemon, target, move) {
+			return 50 + 50 * pokemon.side.totalFainted;
+		},
+		category: "Special",
+		shortDesc: "+50 power for each time a party member fainted.",
+		desc: "Power is equal to 50+(X*50), where X is the total number of times any Pokemon has fainted on the user's side, and X cannot be greater than 100.",
+		name: "Body Count",
+		pp: 10,
+		priority: 0,
+		flags: {protect: 1, mirror: 1},
+		onPrepareHit() {
+			this.attrLastMove('[anim] Core Enforcer');
+		},
+		secondary: null,
+		target: "normal",
+		type: "Ghost",
+	},
+
 	// marillvibes
 	goodvibesonly: {
 		accuracy: 100,
@@ -3648,44 +3615,6 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		},
 		target: "normal",
 		type: "Fairy",
-	},
-
-	// maroon
-	metalblast: {
-		accuracy: 90,
-		basePower: 90,
-		category: "Physical",
-		shortDesc: "Sets G-Max Steelsurge on the foe's side.",
-		desc: "If this move is successful, it sets up G-Max Steelsurge on the opposing side of the field, damaging each opposing Pokemon that switches in. Foes lose 1/32, 1/16, 1/8, 1/4, or 1/2 of their maximum HP, rounded down, based on their weakness to the Steel type; 0.25x, 0.5x, neutral, 2x, or 4x, respectively. Can be removed from the opposing side if any opposing Pokemon uses Rapid Spin or Defog successfully, or is hit by Defog.",
-		name: "Metal Blast",
-		gen: 9,
-		pp: 10,
-		priority: 0,
-		flags: {protect: 1},
-		onTryMove() {
-			this.attrLastMove('[still]');
-		},
-		onPrepareHit(target, source) {
-			this.add('-anim', source, 'Steel Beam', target);
-			this.add('-anim', source, 'G-max Steelsurge', target);
-		},
-		onAfterHit(target, source, move) {
-			if (!move.hasSheerForce && source.hp) {
-				for (const side of source.side.foeSidesWithConditions()) {
-					side.addSideCondition('gmaxsteelsurge');
-				}
-			}
-		},
-		onAfterSubDamage(damage, target, source, move) {
-			if (!move.hasSheerForce && source.hp) {
-				for (const side of source.side.foeSidesWithConditions()) {
-					side.addSideCondition('gmaxsteelsurge');
-				}
-			}
-		},
-		secondary: {}, // Sheer Force-boosted
-		target: "normal",
-		type: "Steel",
 	},
 
 	// Mathy
@@ -3758,7 +3687,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		category: "Status",
 		name: "Plagiarism",
 		shortDesc: "Steal+use foe sig move+imprison. Fail: +1 stats.",
-		desc: "User copies opponents signature move and adds it to its own movepool, replacing this move. The user then uses the copied move immediately and gains the Imprison condition, preventing foes from using moves in the user's moveset. The PP of the copied move will be adjusted to match the PP the copied signature move is supposed to have. If the copied custom move would fail if used in this manner, Plagiarism fails and the user boosts all stats by 1 stage, except Accuracy and Evasion.",
+		desc: "User copies opponent's signature move and adds it to its own movepool, replacing this move. The user then uses the copied move immediately and gains the Imprison condition, preventing foes from using moves in the user's moveset. The PP of the copied move will be adjusted to match the PP the copied signature move is supposed to have. If the copied custom move would fail if used in this manner, Plagiarism fails and the user boosts all stats by 1 stage, except Accuracy and Evasion.",
 		pp: 5,
 		priority: 1,
 		flags: {failencore: 1, nosleeptalk: 1, noassist: 1, failcopycat: 1, failinstruct: 1, failmimic: 1, nosketch: 1},
@@ -3838,6 +3767,32 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		secondary: null,
 		target: "all",
 		type: "Dragon",
+	},
+
+	// Miojo
+	vruuuuuum: {
+		accuracy: 100,
+		basePower: 90,
+		category: "Physical",
+		shortDesc: "Super effective on Water.",
+		desc: "This move's type effectiveness against Water is changed to be super effective no matter what this move's type is.",
+		name: "vruuuuuum",
+		pp: 20,
+		priority: 0,
+		flags: {contact: 1, protect: 1, mirror: 1},
+		onTryMove() {
+			this.attrLastMove('[still]');
+		},
+		onPrepareHit(target, source) {
+			this.add('-anim', source, 'Shift Gear', source);
+			this.add('-anim', source, 'Ice Spinner', target);
+		},
+		onEffectiveness(typeMod, target, type) {
+			if (type === 'Water') return 1;
+		},
+		secondary: null,
+		target: "normal",
+		type: "Ice",
 	},
 
 	// Monkey
@@ -3954,7 +3909,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 			slotCondition: 'qualitycontrolzoomies',
 		},
 		condition: {
-			onSwap(target) {
+			onSwitchIn(target) {
 				if (!target.fainted) {
 					target.addVolatile('catstampofapproval');
 					target.side.removeSlotCondition(target, 'qualitycontrolzoomies');
@@ -4041,7 +3996,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		},
 		slotCondition: 'nyaa',
 		condition: {
-			onSwap(target) {
+			onSwitchIn(target) {
 				const source = this.effectState.source;
 				if (!target.fainted) {
 					this.add(`c:|${getName((source.illusion || source).name)}|~nyaa ${target.name}`);
@@ -4085,30 +4040,6 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		secondary: {
 			volatileStatus: 'attract',
 			chance: 40,
-		},
-		target: "normal",
-		type: "Fairy",
-	},
-
-	// Nyx
-	cottoncandycrush: {
-		accuracy: 100,
-		basePower: 80,
-		category: "Physical",
-		shortDesc: "Uses Sp. Def over Attack in damage calculation.",
-		desc: "Damage is calculated using the user's Special Defense stat as its Attack, including stat stage changes. Other effects that modify the Attack stat are used as normal.",
-		name: "Cotton Candy Crush",
-		overrideOffensiveStat: "spd",
-		gen: 9,
-		pp: 15,
-		priority: 0,
-		flags: {contact: 1, protect: 1, mirror: 1},
-		onTryMove() {
-			this.attrLastMove('[still]');
-		},
-		onPrepareHit(target, source) {
-			this.add('-anim', source, 'Fusion Bolt', target);
-			this.add('-anim', source, 'Fleur Cannon', target);
 		},
 		target: "normal",
 		type: "Fairy",
@@ -4267,8 +4198,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 			pokemon.cureStatus();
 			this.boost({def: 1, spd: 1});
 			(pokemon as any).level += 5;
-			pokemon.details = pokemon.species.name + (pokemon.level === 100 ? '' : ', L' + pokemon.level) +
-				(pokemon.gender === '' ? '' : ', ' + pokemon.gender) + (pokemon.set.shiny ? ', shiny' : '');
+			pokemon.details = pokemon.getUpdatedDetails();
 			this.add('-anim', pokemon, 'Geomancy', pokemon);
 			this.add('replace', pokemon, pokemon.details);
 			this.add('-message', `${pokemon.name} gained 5 levels!`);
@@ -4387,6 +4317,30 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		},
 		target: "self",
 		type: "Normal",
+	},
+
+	// Princess Autumn
+	cottoncandycrush: {
+		accuracy: 100,
+		basePower: 80,
+		category: "Physical",
+		shortDesc: "Uses Sp. Def over Attack in damage calculation.",
+		desc: "Damage is calculated using the user's Special Defense stat as its Attack, including stat stage changes. Other effects that modify the Attack stat are used as normal.",
+		name: "Cotton Candy Crush",
+		overrideOffensiveStat: "spd",
+		gen: 9,
+		pp: 15,
+		priority: 0,
+		flags: {contact: 1, protect: 1, mirror: 1},
+		onTryMove() {
+			this.attrLastMove('[still]');
+		},
+		onPrepareHit(target, source) {
+			this.add('-anim', source, 'Fusion Bolt', target);
+			this.add('-anim', source, 'Fleur Cannon', target);
+		},
+		target: "normal",
+		type: "Fairy",
 	},
 
 	// ptoad
@@ -4624,7 +4578,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		category: "Status",
 		name: "Magic Trick",
 		shortDesc: "Teleport + Clears field effects.",
-		desc: "Removes any terrain, weather, entry hazard, or other removable field condition, and then causes the user to switch out out even if it is trapped and be replaced immediately by a selected party member. The user does not switch out if there are no unfainted party members, and the user will still attempt to switch out if there are no active field conditions.",
+		desc: "Removes any terrain, weather, entry hazard, or other removable field condition, and then causes the user to switch out even if it is trapped and be replaced immediately by a selected party member. The user does not switch out if there are no unfainted party members, and the user will still attempt to switch out if there are no active field conditions.",
 		pp: 5,
 		priority: 0,
 		flags: {bypasssub: 1},
@@ -4749,6 +4703,44 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		},
 		target: "all",
 		type: "Psychic",
+	},
+
+	// Rio Vidal
+	metalblast: {
+		accuracy: 90,
+		basePower: 90,
+		category: "Physical",
+		shortDesc: "Sets G-Max Steelsurge on the foe's side.",
+		desc: "If this move is successful, it sets up G-Max Steelsurge on the opposing side of the field, damaging each opposing Pokemon that switches in. Foes lose 1/32, 1/16, 1/8, 1/4, or 1/2 of their maximum HP, rounded down, based on their weakness to the Steel type; 0.25x, 0.5x, neutral, 2x, or 4x, respectively. Can be removed from the opposing side if any opposing Pokemon uses Rapid Spin or Defog successfully, or is hit by Defog.",
+		name: "Metal Blast",
+		gen: 9,
+		pp: 10,
+		priority: 0,
+		flags: {protect: 1},
+		onTryMove() {
+			this.attrLastMove('[still]');
+		},
+		onPrepareHit(target, source) {
+			this.add('-anim', source, 'Steel Beam', target);
+			this.add('-anim', source, 'G-max Steelsurge', target);
+		},
+		onAfterHit(target, source, move) {
+			if (!move.hasSheerForce && source.hp) {
+				for (const side of source.side.foeSidesWithConditions()) {
+					side.addSideCondition('gmaxsteelsurge');
+				}
+			}
+		},
+		onAfterSubDamage(damage, target, source, move) {
+			if (!move.hasSheerForce && source.hp) {
+				for (const side of source.side.foeSidesWithConditions()) {
+					side.addSideCondition('gmaxsteelsurge');
+				}
+			}
+		},
+		secondary: {}, // Sheer Force-boosted
+		target: "normal",
+		type: "Steel",
 	},
 
 	// Rissoux
@@ -5423,6 +5415,35 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		type: "Poison",
 	},
 
+	// Syrinix
+	asoulforasoul: {
+		accuracy: 100,
+		basePower: 0,
+		category: "Physical",
+		shortDesc: "KOes foe + user if ally was KOed prev. turn.",
+		desc: "If one of the user's party members fainted last turn, this move results in a guaranteed KO for both the target and the user. This move can hit Normal-type Pokemon. Fails if one of the user's party members did not faint last turn.",
+		name: "A Soul for a Soul",
+		pp: 5,
+		priority: 1,
+		flags: {protect: 1, contact: 1},
+		onTryMove() {
+			this.attrLastMove('[still]');
+		},
+		onPrepareHit(target, source) {
+			this.add('-anim', source, 'Explosion', target);
+			this.add('-anim', source, 'Final Gambit', target);
+		},
+		onTry(source, target) {
+			if (!source.side.faintedLastTurn) return false;
+			source.faint(source);
+			target?.faint(source);
+		},
+		ignoreImmunity: true,
+		secondary: null,
+		target: "normal",
+		type: "Ghost",
+	},
+
 	// Teclis
 	risingsword: {
 		accuracy: 100,
@@ -5464,7 +5485,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		basePower: 0,
 		category: "Status",
 		shortDesc: "Protects user, changes type and gains a new move.",
-		desc: "Nearly always moves first. The user protects itself from most attacks made by other Pokemon this turn and gains a random type. If the user has Dynamic Punch, Pyro Ball, Triple Axel, Stone Edge, or Aqua Tail, it will also replace that move with a new move based on the type gained. It can gain Fire type and Pyro Ball, Ice type and Triple Axel, Rock type and Stone Edge, and Water type and Aqua Tail. This move fails entirely if the user moved last this turn or if the foe switches out, and this move has an increasing chance to fail when used consectively.",
+		desc: "Nearly always moves first. The user protects itself from most attacks made by other Pokemon this turn and gains a random type. If the user has Dynamic Punch, Pyro Ball, Triple Axel, Stone Edge, or Aqua Tail, it will also replace that move with a new move based on the type gained. It can gain Fire type and Pyro Ball, Ice type and Triple Axel, Rock type and Stone Edge, and Water type and Aqua Tail. This move fails entirely if the user moved last this turn or if the foe switches out, and this move has an increasing chance to fail when used consecutively.",
 		name: "SAND EAT",
 		pp: 10,
 		priority: 4,
@@ -5516,28 +5537,6 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		secondary: null,
 		target: "self",
 		type: "Ground",
-	},
-
-	// Theia
-	bodycount: {
-		accuracy: 100,
-		basePower: 50,
-		basePowerCallback(pokemon, target, move) {
-			return 50 + 50 * pokemon.side.totalFainted;
-		},
-		category: "Special",
-		shortDesc: "+50 power for each time a party member fainted.",
-		desc: "Power is equal to 50+(X*50), where X is the total number of times any Pokemon has fainted on the user's side, and X cannot be greater than 100.",
-		name: "Body Count",
-		pp: 10,
-		priority: 0,
-		flags: {protect: 1, mirror: 1},
-		onPrepareHit() {
-			this.attrLastMove('[anim] Core Enforcer');
-		},
-		secondary: null,
-		target: "normal",
-		type: "Ghost",
 	},
 
 	// Tico
@@ -5905,8 +5904,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 				this.add(`c:|${getName((source.illusion || source).name)}|lol never do that ever again thanks`);
 				this.add('custom', '-endterastallize', pokemon);
 				delete pokemon.terastallized;
-				const details = pokemon.species.name + (pokemon.level === 100 ? '' : ', L' + pokemon.level) +
-					(pokemon.gender === '' ? '' : ', ' + pokemon.gender) + (pokemon.set.shiny ? ', shiny' : '');
+				const details = pokemon.getUpdatedDetails();
 				this.add('detailschange', pokemon, details);
 			}
 		},
@@ -5984,7 +5982,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 			onStart(pokemon, source) {
 				this.effectState.hp = source.maxhp / 2;
 			},
-			onSwap(target) {
+			onSwitchIn(target) {
 				if (!target.fainted) target.addVolatile('aquaring', target);
 			},
 			onResidualOrder: 4,
@@ -6004,7 +6002,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		basePower: 160,
 		category: "Special",
 		shortDesc: "Hit off higher atk, eats berry, Dragon/Fly eff.",
-		desc: "Uses the user's higher attack stat in damage calculation. Does not need to charge in sun. If this move is successful and the user is holding a berry, the user consumed its held berry and restored 25% of the its maximum HP. This move combines Dragon in its type effectiveness.",
+		desc: "Uses the user's higher attack stat in damage calculation. Does not need to charge in sun. If this move is successful and the user is holding a berry, the user consumes its held berry and restores 25% of its maximum HP. This move combines Dragon in its type effectiveness.",
 		name: "Fruitful Longbow",
 		gen: 9,
 		pp: 15,
@@ -6185,7 +6183,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		basePower: 70,
 		category: "Physical",
 		shortDesc: "Gives foe Miracle Seed. Cycles Treasure Bag.",
-		desc: "If the target is holding an item that can be removed from it, it is replaced with a Mircle Seed. Cycles Treasure Bag.",
+		desc: "If the target is holding an item that can be removed from it, it is replaced with a Miracle Seed. Cycles Treasure Bag.",
 		name: "top kek",
 		pp: 15,
 		priority: 0,
@@ -6263,7 +6261,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		},
 		slotCondition: 'tagyoureit',
 		condition: {
-			onSwap(target) {
+			onSwitchIn(target) {
 				if (target && !target.fainted) {
 					this.add('-anim', target, "Baton Pass", target);
 					target.addVolatile('focusenergy');
@@ -6845,7 +6843,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 			onSideStart(side) {
 				this.add('-sidestart', side, 'move: Sticky Web');
 			},
-			onEntryHazard(pokemon) {
+			onSwitchIn(pokemon) {
 				if (!pokemon.isGrounded() || pokemon.hasItem('heavydutyboots') || pokemon.hasAbility('eternalgenerator')) return;
 				this.add('-activate', pokemon, 'move: Sticky Web');
 				this.boost({spe: -1}, pokemon, pokemon.side.foe.active[0], this.dex.getActiveMove('stickyweb'));
