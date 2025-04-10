@@ -509,7 +509,7 @@ export const Formats: import('../sim/dex-formats').FormatList = [
 		desc: `Alternate formes of existing Pokemon can be used directly without required items/moves.`,
 		mod: 'gen9',
 		ruleset: [
-			'Standard AG', '!Obtainable Formes', '+Past', 'Evasion Clause', 'Forme Clause', 'OHKO Clause', 'Overflow Stat Mod',
+			'Standard AG', '!Obtainable Formes', '+Past', '+LGPE', 'Evasion Clause', 'Forme Clause', 'OHKO Clause', 'Overflow Stat Mod',
 			'Sleep Moves Clause', 'Species Reveal Clause', 'Hackmons Forme Legality', 'Mega Rayquaza Clause',
 		],
 		banlist: ['Calyrex-Shadow', 'Gengar-Mega', 'Miraidon', 'Moody', 'King\'s Rock', 'Razor Fang', 'Baton Pass'],
@@ -2512,7 +2512,7 @@ export const Formats: import('../sim/dex-formats').FormatList = [
 			'Groudon', 'Ho-Oh', 'Koraidon', 'Kyogre', 'Kyurem-White', 'Lugia', 'Lunala', 'Magearna', 'Melmetal', 'Metagross-Mega', 'Mewtwo', 'Miraidon', 'Necrozma-Dawn-Wings',
 			'Necrozma-Dusk-Mane', 'Necrozma-Ultra', 'Palkia', 'Palkia-Origin', 'Rayquaza', 'Reshiram', 'Shedinja', 'Solgaleo', 'Stakataka', 'Terapagos', 'Urshifu',
 			'Urshifu-Rapid-Strike', 'Xerneas', 'Yveltal', 'Zacian', 'Zacian-Crowned', 'Zamazenta', 'Zamazenta-Crowned', 'Zekrom', 'Zygarde-50%', 'Zygarde-Complete',
-			'Commander', 'Power Construct', 'Eevium Z', 'Assist', 'Coaching', 'Dark Void', 'Swagger',
+			'Commander', 'Power Construct', 'Shadow Tag', 'Eevium Z', 'Assist', 'Coaching', 'Dark Void', 'Swagger',
 		],
 	},
 	{
@@ -3307,16 +3307,6 @@ export const Formats: import('../sim/dex-formats').FormatList = [
 		ruleset: ['[Gen 2] NU'],
 		banlist: ['NU', 'PUBL', 'Baton Pass + Mean Look', 'Baton Pass + Spider Web'],
 		unbanlist: ['Swagger'],
-	},
-	{
-		name: "[Gen 3] UUBL",
-		mod: 'gen3',
-		ruleset: ['[Gen 3] OU'],
-		banlist: [
-			'OU', 'Smeargle + Ingrain', 'Baton Pass + Block', 'Baton Pass + Mean Look', 'Baton Pass + Spider Web', 'Flail', 'Reversal',
-			'Baton Pass + Speed Boost', 'Baton Pass + Agility', 'Baton Pass + Dragon Dance', 'Baton Pass + Salac Berry',
-		],
-		unbanlist: ['Soundproof', 'Sand Veil'],
 	},
 
 	// Past Gens OU
@@ -4414,6 +4404,17 @@ export const Formats: import('../sim/dex-formats').FormatList = [
 			'Lugia', 'Mew', 'Mewtwo', 'Rayquaza', 'Slaking', 'Snorlax', 'Suicune', 'Zapdos', 'Destiny Bond', 'Explosion', 'Perish Song',
 			'Self-Destruct', 'Focus Band', 'King\'s Rock', 'Quick Claw',
 		],
+	},
+	{
+		name: "[Gen 3] UUBL",
+		mod: 'gen3',
+		searchShow: false,
+		ruleset: ['[Gen 3] OU'],
+		banlist: [
+			'OU', 'Smeargle + Ingrain', 'Baton Pass + Block', 'Baton Pass + Mean Look', 'Baton Pass + Spider Web', 'Flail', 'Reversal',
+			'Baton Pass + Speed Boost', 'Baton Pass + Agility', 'Baton Pass + Dragon Dance', 'Baton Pass + Salac Berry',
+		],
+		unbanlist: ['Soundproof', 'Sand Veil'],
 	},
 	{
 		name: "[Gen 3] ZU",
