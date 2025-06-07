@@ -752,9 +752,9 @@ function runDexsearch(target: string, cmd: string, message: string, isTest: bool
 			if (g === undefined) continue;
 			if (tierTraits.includes(cat) && tierInequalitySearch) continue;
 			if (cat === 'stats') {
-				const ineqality = param.split(',');
-				const result = validStatInequality(group['stats'], ineqality[0],
-					ineqality[1] as Direction, ineqality[2], +ineqality[3], input);
+				const inequality = param.split(',');
+				const result = validStatInequality(group['stats'], inequality[0],
+					inequality[1] as Direction, inequality[2], +inequality[3], input);
 				if (!result) continue;
 				return result;
 			}
@@ -789,7 +789,7 @@ function runDexsearch(target: string, cmd: string, message: string, isTest: bool
 
 			// Skip over combined inequality operations because they present separately.
 			if (gEquality && !(input.search(/([><]{1}=)/) >= 0 || gInclusiveIneq)) {
-				return `The search already included '${input}' or another inequality which makes it redunant.`;
+				return `The search already included '${input}' or another inequality which makes it redundant.`;
 			} else if (compareTo === 'numeric') {
 				if ((greater && ((inclusiveGreater && value < +greater) || (!inclusiveGreater && value <= +greater))) ||
 					(less && ((inclusiveLess && value > +less) || (!inclusiveLess && value >= +less)))) {
@@ -807,7 +807,7 @@ function runDexsearch(target: string, cmd: string, message: string, isTest: bool
 			const checkEquality = input.includes('=') && gEquality;
 
 			if (gValue || inverseSwapValue) {
-				return `The search already included '${input}' or another inequality which makes it redunant.`;
+				return `The search already included '${input}' or another inequality which makes it redundant.`;
 			} else if (compareTo === 'numeric' && (inverseValue || gEquality)) {
 				const result = value - Number(inverseValue || gEquality);
 				if ((direction === 'greater' && ((checkEquality && result > 0) || (!checkEquality && result >= 0))) ||
@@ -874,8 +874,8 @@ function runDexsearch(target: string, cmd: string, message: string, isTest: bool
 				tierSearch = tierSearch || !isNotSearch;
 				if (isTierInequalityParam) {
 					const tierValue = singlesTiersValues[target];
-					const entires = Object.entries(singlesTiersValues);
-					for (const [key, value] of entires) {
+					const entries = Object.entries(singlesTiersValues);
+					for (const [key, value] of entries) {
 						const useTier = (value > tierValue && tierInequality[0]) || (value < tierValue && !tierInequality[0]);
 						if (useTier && (!key.startsWith('CAP') || capSearch)) {
 							orGroup.tiers[key] = true;
@@ -896,8 +896,8 @@ function runDexsearch(target: string, cmd: string, message: string, isTest: bool
 				tierSearch = tierSearch || !isNotSearch;
 				if (isTierInequalityParam) {
 					const tierValue = doublesTiersValues[target];
-					const entires = Object.entries(doublesTiersValues);
-					for (const [key, value] of entires) {
+					const entries = Object.entries(doublesTiersValues);
+					for (const [key, value] of entries) {
 						if ((value > tierValue && tierInequality[0]) || (value < tierValue && !tierInequality[0])) {
 							orGroup.doublesTiers[key] = true;
 						} else if (tierValue === value && tierInequality[1]) {
@@ -1582,7 +1582,7 @@ function runDexsearch(target: string, cmd: string, message: string, isTest: bool
 	}
 
 	let resultsStr = (message === "" ? message :
-		`<span style="color:#999999;">${Utils.escapeHTML(message)}:</span><br/>`);
+		`<span class="gray">${Utils.escapeHTML(message)}:</span><br/>`);
 	if (results.length > 1) {
 		results.sort();
 		if (sort) {
@@ -1597,12 +1597,7 @@ function runDexsearch(target: string, cmd: string, message: string, isTest: bool
 		}
 
 		if (results.length > MAX_RANDOM_RESULTS) {
-			showAll = showAll && message !== "" && !message.startsWith('!');
-			const notShown = results.length - RESULTS_MAX_LENGTH;
-			const resultsSummary = `${mapPokemonResults(results.slice(0, RESULTS_MAX_LENGTH))}, and ${notShown} more. <button class="subtle">Click to show all results.</button>`;
-			const resultsHidden = mapPokemonResults(results);
-			resultsStr = `<div class="datasearch" style="cursor: pointer">${message === "" ? "" : `<span style="color:#999999">${Utils.escapeHTML(message)}`}<button class="subtle" style="float: right">${showAll ? '[-]' : '[+]'}</button>${message === "" ? "" : `</span><br/>`}`;
-			resultsStr += `<div class="datasearch-body" style="display: ${showAll ? 'none' : 'block'}">${resultsSummary}</div><div class="datasearch-body" style="display: ${showAll ? 'block' : 'none'}>${resultsHidden}</div></div>`;
+			resultsStr = formatCollapsible(message, showAll, results, mapPokemonResults);
 		} else {
 			resultsStr += mapPokemonResults(results);
 		}
@@ -1613,6 +1608,15 @@ function runDexsearch(target: string, cmd: string, message: string, isTest: bool
 	}
 	if (isTest) return { results: results.map(species => species.name), reply: resultsStr };
 	return { reply: resultsStr };
+}
+
+function formatCollapsible(message: string, showall: boolean, results: any[], mapfunc: (inputArr: any[]) => string) {
+	const expand = showall && message !== "" && !message.startsWith('!');
+	const header = message === '' ? `${results.length} results` : `${message} (${results.length} results)`;
+	const notShown = results.length - RESULTS_MAX_LENGTH;
+	const resultsSummary = `${mapfunc(results.slice(0, RESULTS_MAX_LENGTH))}, and ${notShown} more. <span class="ilink">Show all</span>`;
+	const resultsHidden = mapfunc(results);
+	return `<details class="details"${expand ? ' open' : ''}><summary><span class="gray">${Utils.escapeHTML(header)}</span><br/><span class="details-preview">${resultsSummary}</span></summary>${resultsHidden}</details>`;
 }
 
 function runMovesearch(target: string, cmd: string, message: string, isTest: boolean) {
@@ -2312,9 +2316,9 @@ function runMovesearch(target: string, cmd: string, message: string, isTest: boo
 
 	let resultsStr = "";
 	if (targetMons.length) {
-		resultsStr += `<span style="color:#999999;">Matching moves found in learnset(s) for</span> ${targetMons.map(mon => `${mon.shouldBeExcluded ? "!" : ""}${mon.name}`).join(', ')}:<br />`;
+		resultsStr += `<span class="gray">Matching moves found in learnset(s) for</span> ${targetMons.map(mon => `${mon.shouldBeExcluded ? "!" : ""}${mon.name}`).join(', ')}:<br />`;
 	} else {
-		resultsStr += (message === "" ? message : `<span style="color:#999999;">${Utils.escapeHTML(message)}:</span><br />`);
+		resultsStr += (message === "" ? message : `<span class="gray">${Utils.escapeHTML(message)}:</span><br />`);
 	}
 	if (randomOutput && randomOutput < results.length) {
 		results = Utils.shuffle(results).slice(0, randomOutput);
@@ -2343,12 +2347,7 @@ function runMovesearch(target: string, cmd: string, message: string, isTest: boo
 		}
 
 		if (results.length > MAX_RANDOM_RESULTS) {
-			showAll = showAll && message !== "" && !message.startsWith('!');
-			const notShown = results.length - RESULTS_MAX_LENGTH;
-			const resultsSummary = `${mapMoveResults(results.slice(0, RESULTS_MAX_LENGTH))}, and ${notShown} more. <button class="subtle">Click to show all results.</button>`;
-			const resultsHidden = mapMoveResults(results);
-			resultsStr = `<div class="datasearch" style="cursor: pointer">${message === "" ? "" : `<span style="color:#999999">${Utils.escapeHTML(message)}`}<button class="subtle" style="float: right">${showAll ? '[-]' : '[+]'}</button>${message === "" ? "" : `</span><br/>`}`;
-			resultsStr += `<div class="datasearch-body" style="display: ${showAll ? 'none' : 'block'}">${resultsSummary}</div><div class="datasearch-body" style="display: ${showAll ? 'block' : 'none'}>${resultsHidden}</div></div>`;
+			resultsStr = formatCollapsible(message, showAll, results, mapMoveResults);
 		} else {
 			resultsStr += mapMoveResults(results);
 		}
@@ -2600,7 +2599,13 @@ function runItemsearch(target: string, cmd: string, message: string) {
 		}
 	}
 
-	let resultsStr = (message === "" ? message : `<span style="color:#999999;">${Utils.escapeHTML(message)}:</span><br />`);
+	function mapItemResults(inputArr: (string | Item)[]) {
+		return inputArr.map(
+			result => `<a href="//${Config.routes.dex}/items/${toID(result)}" target="_blank" class="subtle" style="white-space:nowrap"><psicon item="${result}" style="vertical-align:-7px" />${result}</a>`
+		).join(", ");
+	}
+
+	let resultsStr = (message === "" ? message : `<span class="gray">${Utils.escapeHTML(message)}:</span><br />`);
 	if (randomOutput !== 0) {
 		const randomItems = [];
 		if (foundItems.length === 0) {
@@ -2615,27 +2620,14 @@ function runItemsearch(target: string, cmd: string, message: string) {
 				randomItems.push(foundItems[Math.floor(Math.random() * foundItems.length)]);
 			}
 		}
-		resultsStr += randomItems.map(
-			result => `<a href="//${Config.routes.dex}/items/${toID(result)}" target="_blank" class="subtle" style="white-space:nowrap"><psicon item="${result}" style="vertical-align:-7px" />${result}</a>`
-		).join(", ");
+		resultsStr += mapItemResults(randomItems);
 		return { reply: resultsStr };
-	}
-
-	function mapItemResults(inputArr: string[]) {
-		return inputArr.map(
-			result => `<a href="//${Config.routes.dex}/items/${toID(result)}" target="_blank" class="subtle" style="white-space:nowrap"><psicon item="${result}" style="vertical-align:-7px" />${result}</a>`
-		).join(", ");
 	}
 
 	if (foundItems.length > 0) {
 		foundItems.sort();
 		if (foundItems.length > MAX_RANDOM_RESULTS) {
-			showAll = showAll && message !== "" && !message.startsWith('!');
-			const notShown = foundItems.length - RESULTS_MAX_LENGTH;
-			const resultsSummary = `${mapItemResults(foundItems.slice(0, RESULTS_MAX_LENGTH))}, and ${notShown} more. <button class="subtle">Click to show all results.</button>`;
-			const resultsHidden = mapItemResults(foundItems);
-			resultsStr = `<div class="datasearch" style="cursor: pointer">${message === "" ? "" : `<span style="color:#999999">${Utils.escapeHTML(message)}`}<button class="subtle" style="float: right">${showAll ? '[-]' : '[+]'}</button>${message === "" ? "" : `</span><br/>`}`;
-			resultsStr += `<div class="datasearch-body" style="display: ${showAll ? 'none' : 'block'}">${resultsSummary}</div><div class="datasearch-body" style="display: ${showAll ? 'block' : 'none'}>${resultsHidden}</div></div>`;
+			resultsStr = formatCollapsible(message, showAll, foundItems, mapItemResults);
 		} else {
 			resultsStr += mapItemResults(foundItems);
 		}
@@ -2786,8 +2778,14 @@ function runAbilitysearch(target: string, cmd: string, message: string) {
 		}
 	}
 
+	function mapAbilityResults(inputArr: (string | Ability)[]) {
+		return inputArr.map(
+			result => `<a href="//${Config.routes.dex}/abilities/${toID(result)}" target="_blank" class="subtle" style="white-space:nowrap">${result}</a>`
+		).join(", ");
+	}
+
 	if (foundAbilities.length === 1) return { dt: foundAbilities[0] };
-	let resultsStr = (message === "" ? message : `<span style="color:#999999;">${Utils.escapeHTML(message)}:</span><br />`);
+	let resultsStr = (message === "" ? message : `<span class="gray">${Utils.escapeHTML(message)}:</span><br />`);
 
 	if (randomOutput !== 0) {
 		const randomAbilities = [];
@@ -2807,27 +2805,14 @@ function runAbilitysearch(target: string, cmd: string, message: string) {
 				randomAbilities.push(foundAbilities[Math.floor(Math.random() * foundAbilities.length)]);
 			}
 		}
-		resultsStr += randomAbilities.map(
-			result => `<a href="//${Config.routes.dex}/abilities/${toID(result)}" target="_blank" class="subtle" style="white-space:nowrap">${result}</a>`
-		).join(", ");
+		resultsStr += mapAbilityResults(randomAbilities);
 		return { reply: resultsStr };
-	}
-
-	function mapAbilityResults(inputArr: string[]) {
-		return inputArr.map(
-			result => `<a href="//${Config.routes.dex}/abilities/${toID(result)}" target="_blank" class="subtle" style="white-space:nowrap">${result}</a>`
-		).join(", ");
 	}
 
 	if (foundAbilities.length > 0) {
 		foundAbilities.sort();
 		if (foundAbilities.length > MAX_RANDOM_RESULTS) {
-			showAll = showAll && message !== "" && !message.startsWith('!');
-			const notShown = foundAbilities.length - RESULTS_MAX_LENGTH;
-			const resultsSummary = `${mapAbilityResults(foundAbilities.slice(0, RESULTS_MAX_LENGTH))}, and ${notShown} more. <button class="subtle">Click to show all results.</button>`;
-			const resultsHidden = mapAbilityResults(foundAbilities);
-			resultsStr = `<div class="datasearch" style="cursor: pointer">${message === "" ? "" : `<span style="color:#999999">${Utils.escapeHTML(message)}`}<button class="subtle" style="float: right">${showAll ? '[-]' : '[+]'}</button>${message === "" ? "" : `</span><br/>`}`;
-			resultsStr += `<div class="datasearch-body" style="display: ${showAll ? 'none' : 'block'}">${resultsSummary}</div><div class="datasearch-body" style="display: ${showAll ? 'block' : 'none'}>${resultsHidden}</div></div>`;
+			resultsStr = formatCollapsible(message, showAll, foundAbilities, mapAbilityResults);
 		} else {
 			resultsStr += mapAbilityResults(foundAbilities);
 		}
@@ -3058,7 +3043,7 @@ function runRandtype(target: string, cmd: string, message: string) {
 		// Add a random type to the output.
 		randTypes.push(Dex.types.names()[Math.floor(Math.random() * Dex.types.names().length)]);
 	}
-	let resultsStr = (message === "" ? message : `<span style="color:#999999;">${Utils.escapeHTML(message)}:</span><br />`);
+	let resultsStr = (message === "" ? message : `<span class="gray">${Utils.escapeHTML(message)}:</span><br />`);
 	resultsStr += randTypes.map(
 		type => icon[type]
 	).join(' ');
