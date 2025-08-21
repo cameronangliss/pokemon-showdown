@@ -1105,7 +1105,7 @@ export class TeamValidator {
 		const ruleTable = this.ruleTable;
 		const dex = this.dex;
 
-		const allowAVs = ruleTable.has('allowavs');
+		const allowAVs = !ruleTable.has('lgpenormalrules');
 		const evLimit = ruleTable.evLimit;
 		const canBottleCap = dex.gen >= 7 && (set.level >= (dex.gen < 9 ? 100 : 50) || !ruleTable.has('obtainablemisc'));
 
@@ -1612,13 +1612,10 @@ export class TeamValidator {
 			}
 			if (species.requiredItems && !species.requiredItems.includes(item.name)) {
 				if (dex.gen >= 8 && (species.baseSpecies === 'Arceus' || species.baseSpecies === 'Silvally')) {
-					// Arceus/Silvally formes in gen 8 only require the item with Multitype/RKS System
-					if (set.ability === species.abilities[0]) {
-						problems.push(
-							`${name} needs to hold ${species.requiredItems.join(' or ')}.`,
-							`(It will revert to its Normal forme if you remove the item or give it a different item.)`
-						);
-					}
+					problems.push(
+						`${name} needs to hold ${species.requiredItems.join(' or ')}.`,
+						`(It will revert to its Normal forme if you remove the item or give it a different item.)`
+					);
 				} else {
 					// Memory/Drive/Griseous Orb/Plate/Z-Crystal - Forme mismatch
 					const baseSpecies = this.dex.species.get(species.changesFrom);
@@ -2533,6 +2530,7 @@ export class TeamValidator {
 				}
 			}
 
+			let canUseHomeRelearner = false;
 			for (let learned of sources) {
 				// Every `learned` represents a single way a pokemon might
 				// learn a move. This can be handled one of several ways:
@@ -2560,7 +2558,7 @@ export class TeamValidator {
 					}
 					continue;
 				}
-				if (learnedGen < this.minSourceGen) {
+				if (learnedGen < this.minSourceGen && !canUseHomeRelearner) {
 					if (!cantLearnReason) {
 						cantLearnReason = `can't be transferred from Gen ${learnedGen} to ${this.minSourceGen}.`;
 					}
@@ -2572,6 +2570,8 @@ export class TeamValidator {
 					}
 					continue;
 				}
+
+				if (learnedGen === 9 && learned.charAt(1) !== 'S') canUseHomeRelearner = true;
 
 				if (
 					baseSpecies.evoRegion === 'Alola' && checkingPrevo && learnedGen >= 8 &&
