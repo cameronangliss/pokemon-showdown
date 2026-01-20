@@ -1977,12 +1977,10 @@ export class GameRoom extends BasicRoom {
 	}
 	override pokeExpireTimer() {
 		// empty rooms time out after ten minutes
+		// rooms with users never expire due to inactivity
+		if (this.expireTimer) clearTimeout(this.expireTimer);
 		if (!this.userCount) {
-			if (this.expireTimer) clearTimeout(this.expireTimer);
 			this.expireTimer = setTimeout(() => this.expire(), TIMEOUT_EMPTY_DEALLOCATE);
-		} else {
-			if (this.expireTimer) clearTimeout(this.expireTimer);
-			this.expireTimer = setTimeout(() => this.expire(), TIMEOUT_INACTIVE_DEALLOCATE);
 		}
 	}
 	requestModchat(user: User | null) {
