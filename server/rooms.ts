@@ -1071,6 +1071,7 @@ export abstract class BasicRoom {
 			this.reportJoin('l', user.getIdentity(this), user);
 		}
 		this.game?.onLeave?.(user);
+		this.pokeExpireTimer();
 		this.runAutoModchat();
 
 		return true;
