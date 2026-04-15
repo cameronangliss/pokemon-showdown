@@ -18,7 +18,7 @@
 const ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'.split('');
 
 const TIMEOUT_EMPTY_DEALLOCATE = 10 * 1000;
-const TIMEOUT_INACTIVE_DEALLOCATE = Infinity;
+const TIMEOUT_INACTIVE_DEALLOCATE = 40 * 60 * 1000;
 const REPORT_USER_STATS_INTERVAL = 10 * 60 * 1000;
 const MAX_CHATROOM_ID_LENGTH = 225;
 
@@ -1979,12 +1979,10 @@ export class GameRoom extends BasicRoom {
 	}
 	override pokeExpireTimer() {
 		// empty rooms time out after ten seconds
+		// rooms with users never expire due to inactivity
+		if (this.expireTimer) clearTimeout(this.expireTimer);
 		if (!this.userCount) {
-			if (this.expireTimer) clearTimeout(this.expireTimer);
 			this.expireTimer = setTimeout(() => this.expire(), TIMEOUT_EMPTY_DEALLOCATE);
-		} else {
-			if (this.expireTimer) clearTimeout(this.expireTimer);
-			this.expireTimer = setTimeout(() => this.expire(), TIMEOUT_INACTIVE_DEALLOCATE);
 		}
 	}
 	requestModchat(user: User | null) {
