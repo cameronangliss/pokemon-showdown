@@ -187,6 +187,7 @@ export const Scripts: ModdedBattleScriptsData = {
 					return [{
 						move: moveSlot.move,
 						id: moveSlot.id,
+						target: moveSlot.target,
 					}];
 				}
 				// does this happen?
