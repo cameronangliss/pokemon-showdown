@@ -125,6 +125,8 @@ export interface RoomSettings {
 	minorActivityQueue?: MinorActivityData[];
 	repeats?: RepeatedPhrase[];
 	topics?: string[];
+	// auto start thing of the day
+	autoStartOtd?: boolean;
 	autoModchat?: {
 		rank: GroupSymbol,
 		time: number,
@@ -299,7 +301,7 @@ export abstract class BasicRoom {
 		if (!options.isPersonal) this.persist = true;
 
 		this.minorActivity = null;
-		this.minorActivityQueue = null;
+		this.minorActivityQueue = this.settings.minorActivityQueue || null;
 		if (options.parentid) {
 			this.setParent(Rooms.get(options.parentid) || null);
 		}
@@ -530,6 +532,7 @@ export abstract class BasicRoom {
 		if (!this.minorActivityQueue) this.minorActivityQueue = [];
 		this.minorActivityQueue.push(activity);
 		this.settings.minorActivityQueue = this.minorActivityQueue;
+		this.saveSettings();
 	}
 	clearMinorActivityQueue(slot?: number, depth = 1) {
 		if (!this.minorActivityQueue) return;
@@ -1076,7 +1079,7 @@ export abstract class BasicRoom {
 	runAutoModchat() {
 		if (!this.settings.autoModchat || this.settings.autoModchat.active) return;
 		// they are staff and online
-		const staff = Object.values(this.users).filter(u => this.auth.atLeast(u, '%'));
+		const staff = Object.values(this.users).filter(u => this.auth.atLeast(u, '%') && u.statusType === 'online');
 		if (!staff.length) {
 			const { time } = this.settings.autoModchat;
 			if (!time || time < 5) {
@@ -1494,6 +1497,7 @@ export class GlobalRoomState {
 			// 32 was previously used for Multi Battles
 			if (format.bestOfDefault) displayCode |= 64;
 			if (format.teraPreviewDefault) displayCode |= 128;
+			if (format.itemClauseDefault) displayCode |= 256;
 			this.formatList += ',' + displayCode.toString(16);
 		}
 		return this.formatList;
