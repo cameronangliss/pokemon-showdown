@@ -312,8 +312,10 @@ export class Pokemon {
 
 		this.m = {};
 
-		const pokemonScripts = this.battle.format.pokemon || this.battle.dex.data.Scripts.pokemon;
+		const pokemonScripts = this.battle.dex.data.Scripts.pokemon;
 		if (pokemonScripts) Object.assign(this, pokemonScripts);
+
+		if (this.battle.format.pokemon) Object.assign(this, this.battle.format.pokemon);
 
 		if (typeof set === 'string') set = { name: set };
 
@@ -2190,7 +2192,7 @@ export class Pokemon {
 		// TODO: check interactions of Mega Sol with Utility Umbrella and Desolate Land
 		if (this.hasAbility('megasol') && this.battle.activePokemon === this && weather !== 'sunnyday') {
 			if (message) this.battle.add('-activate', this, 'ability: Mega Sol');
-			return 'sunnyday';
+			return 'sunnyday' as ID;
 		}
 		return weather;
 	}
@@ -2208,6 +2210,7 @@ export class Pokemon {
 		}
 		if (this.species.name === 'Terapagos-Terastal' && this.hasAbility('Tera Shell') &&
 			!this.battle.suppressingAbility(this)) {
+			if (move.hit === 1) delete this.abilityState.resisted; // reset for first hit
 			if (this.abilityState.resisted) return -1; // all hits of multi-hit move should be not very effective
 			if (move.category === 'Status' || move.id === 'struggle' || !this.runImmunity(move) ||
 				totalTypeMod < 0 || this.hp < this.maxhp) {
