@@ -525,8 +525,7 @@ export class TeamValidator {
 
 		let outOfBattleSpecies = species;
 		let tierSpecies = species;
-		if (ability.id === 'battlebond' && toID(species.baseSpecies) === 'greninja' &&
-			this.format.mod !== 'gen9legendsou') {
+		if (ability.id === 'battlebond' && toID(species.baseSpecies) === 'greninja') {
 			outOfBattleSpecies = dex.species.get('greninjabond');
 			if (ruleTable.has('obtainableformes')) {
 				tierSpecies = outOfBattleSpecies;
@@ -705,7 +704,7 @@ export class TeamValidator {
 				set.hpType = type.name;
 			}
 		}
-		if ((this.gen === 9 && dex.currentMod !== 'champions' && !ruleTable.has('terastalclause')) ||
+		if ((this.gen === 9 && !dex.currentMod.startsWith('champions') && !ruleTable.has('terastalclause')) ||
 			ruleTable.has('bonustypemod')) {
 			const type = dex.types.get(set.teraType || species.requiredTeraType || species.types[0]);
 			if (!type.exists || type.isNonstandard) {
@@ -782,8 +781,10 @@ export class TeamValidator {
 		problem = this.checkAbility(set, ability, setHas);
 		if (problem) problems.push(problem);
 
-		if (!set.nature || dex.gen <= 2) {
+		if (dex.gen <= 2) {
 			set.nature = '';
+		} else if (!set.nature) {
+			set.nature = 'Serious';
 		}
 		nature = dex.natures.get(set.nature);
 		problem = this.checkNature(set, nature, setHas);
@@ -1127,7 +1128,7 @@ export class TeamValidator {
 		const dex = this.dex;
 
 		const allowAVs = !ruleTable.has('lgpenormalrules');
-		const useStatPoints = dex.currentMod === 'champions';
+		const useStatPoints = dex.currentMod.startsWith('champions');
 		const evLimit = ruleTable.evLimit;
 		const canBottleCap = dex.gen >= 7 && (set.level >= (dex.gen < 9 ? 100 : 50) || !ruleTable.has('obtainablemisc'));
 
@@ -1312,7 +1313,13 @@ export class TeamValidator {
 		for (const stat in set.evs) totalEV += set.evs[stat as 'hp'];
 		if (!this.format.debug) {
 			if (set.level > 1 && evLimit !== 0 && totalEV === 0) {
-				problems.push(`${name} has exactly 0 EVs - did you forget to EV it? (If this was intentional, add exactly 1 to one of your EVs, which won't change its stats but will tell us that it wasn't a mistake).`);
+				if (useStatPoints) {
+					if (set.nature === 'Serious') {
+						problems.push(`${name} has exactly 0 Stat Points - did you forget to invest it? (If this was intentional, change your Nature to a different neutral Nature, which won't change its stats but will tell us that it wasn't a mistake).`);
+					}
+				} else {
+					problems.push(`${name} has exactly 0 EVs - did you forget to EV it? (If this was intentional, add exactly 1 to one of your EVs, which won't change its stats but will tell us that it wasn't a mistake).`);
+				}
 			} else if (![508, 510].includes(evLimit!) && [508, 510].includes(totalEV)) {
 				problems.push(`${name} has exactly ${totalEV} EVs, but this format does not restrict you to 510 EVs (If this was intentional, add exactly 1 to one of your EVs, which won't change its stats but will tell us that it wasn't a mistake).`);
 			}
@@ -1773,7 +1780,7 @@ export class TeamValidator {
 			setHas['pokemon:rockruffdusk'] = true;
 		}
 
-		const tier = tierSpecies.tier === '(PU)' ? 'ZU' : tierSpecies.tier === '(NU)' ? 'PU' : tierSpecies.tier;
+		const tier = tierSpecies.tier;
 		const tierTag = 'pokemontag:' + toID(tier);
 		setHas[tierTag] = true;
 
@@ -1781,8 +1788,7 @@ export class TeamValidator {
 		const doublesTierTag = 'pokemontag:' + toID(doublesTier);
 		setHas[doublesTierTag] = true;
 
-		const ndTier = tierSpecies.natDexTier === '(PU)' ? 'ZU' :
-			tierSpecies.natDexTier === '(NU)' ? 'PU' : tierSpecies.natDexTier;
+		const ndTier = tierSpecies.natDexTier;
 		const ndTierTag = 'pokemontag:nd' + toID(ndTier);
 		setHas[ndTierTag] = true;
 
